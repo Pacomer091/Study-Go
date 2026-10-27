@@ -68,37 +68,43 @@
           </div>
 
           <div class="quick-stats">
-            <div class="stat-card">
+            <button class="stat-card" data-action="goto-filter" data-view="tasks" data-filter="pendientes" title="Ver tareas pendientes">
               <div class="stat-ico">📝</div>
               <div class="stat-num" id="stat-pending">0</div>
               <div class="stat-label">Pendientes</div>
-            </div>
-            <div class="stat-card">
+            </button>
+            <button class="stat-card" data-action="goto-filter" data-view="tasks" data-filter="completadas" title="Ver tareas completadas">
               <div class="stat-ico">✅</div>
               <div class="stat-num" id="stat-done">0</div>
               <div class="stat-label">Completadas</div>
-            </div>
-            <div class="stat-card">
+            </button>
+            <button class="stat-card" data-action="goto" data-view="progress" title="Ver progreso">
               <div class="stat-ico">🎯</div>
               <div class="stat-num" id="stat-progress">0%</div>
               <div class="stat-label">Progreso</div>
-            </div>
-            <div class="stat-card">
+            </button>
+            <button class="stat-card" data-action="goto" data-view="pomodoro" title="Ir al Pomodoro">
               <div class="stat-ico">🧘</div>
               <div class="stat-num" id="stat-focus">0</div>
               <div class="stat-label">Sesiones</div>
-            </div>
+            </button>
           </div>
 
           <div class="section-head">
             <h3>📅 Hoy</h3>
-            <button class="link" data-action="goto" data-view="calendar">Ver calendario</button>
+            <div class="section-actions">
+              <button class="btn btn-ghost btn-sm" data-action="new-task">＋ Añadir tarea</button>
+              <button class="link" data-action="goto-filter" data-view="tasks" data-filter="pendientes">Ver todas</button>
+            </div>
           </div>
           <div class="list" id="home-today-list"></div>
 
           <div class="section-head">
             <h3>⭐ Próximos exámenes</h3>
-            <button class="link" data-action="goto" data-view="tasks">Ver tareas</button>
+            <div class="section-actions">
+              <button class="btn btn-ghost btn-sm" data-action="new-exam">＋ Añadir examen</button>
+              <button class="link" data-action="goto-filter" data-view="tasks" data-filter="examen">Ver exámenes</button>
+            </div>
           </div>
           <div class="list" id="home-exams-list"></div>
 
@@ -115,9 +121,12 @@
 
         <!-- ===== TAREAS ===== -->
         <section class="view" id="view-tasks" data-title="Tareas">
+          <div class="section-head" style="margin-top:0; margin-bottom:14px;">
+            <h3>Todas las tareas</h3>
+            <button class="btn btn-primary btn-sm" data-action="new-task">＋ Nueva tarea</button>
+          </div>
           <div class="filter-chips" id="task-filter"></div>
           <div class="list" id="tasks-list"></div>
-          <button class="fab" id="btn-add-task" aria-label="Añadir tarea">＋</button>
         </section>
 
         <!-- ===== CALENDARIO ===== -->
@@ -292,6 +301,7 @@
         </section>
 
       </main>
+      <button class="fab" id="btn-add-task" title="Añadir tarea" aria-label="Añadir tarea">＋</button>
     </div>
 
     <!-- ===== BOTTOM NAV (mobile) ===== -->

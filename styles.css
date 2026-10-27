@@ -141,10 +141,11 @@ h1, h2, h3 { font-family: "Space Grotesk", "Inter", sans-serif; letter-spacing: 
 
 .section-head {
   display: flex; align-items: center; justify-content: space-between;
-  margin: 26px 0 12px;
+  margin: 26px 0 12px; gap: 12px;
 }
 .section-head h3 { font-size: 17px; }
 .section-head:first-child { margin-top: 0; }
+.section-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
 .link { color: var(--primary); font-weight: 600; font-size: 13.5px; }
 
@@ -176,6 +177,13 @@ h1, h2, h3 { font-family: "Space Grotesk", "Inter", sans-serif; letter-spacing: 
   background: var(--card); border: 1px solid var(--border);
   border-radius: var(--radius); padding: 16px;
   box-shadow: var(--shadow); text-align: center;
+  color: inherit; width: 100%; cursor: pointer;
+  transition: transform .15s, box-shadow .15s, border-color .15s;
+}
+.stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--primary);
 }
 .stat-ico { font-size: 22px; }
 .stat-num { font-family: "Space Grotesk", sans-serif; font-size: 24px; font-weight: 700; margin: 6px 0 2px; }
@@ -200,19 +208,22 @@ h1, h2, h3 { font-family: "Space Grotesk", "Inter", sans-serif; letter-spacing: 
   background: var(--card); border: 1px solid var(--border);
   border-radius: var(--radius); padding: 14px 16px;
   display: flex; align-items: center; gap: 14px;
-  box-shadow: var(--shadow); transition: transform .15s;
+  box-shadow: var(--shadow); transition: transform .15s, border-color .15s;
 }
-.card:hover { transform: translateY(-2px); }
+.card:hover { transform: translateY(-2px); border-color: var(--primary-soft); }
 
 .task-check {
-  width: 24px; height: 24px; border-radius: 50%;
+  width: 28px; height: 28px; border-radius: 50%;
   border: 2px solid var(--muted); flex-shrink: 0;
   display: grid; place-items: center; color: #fff;
-  font-size: 14px; transition: all .15s;
+  font-size: 14px; font-weight: 700; transition: all .15s;
+  cursor: pointer;
 }
-.task-check.done { background: var(--green); border-color: var(--green); }
-.task-body { flex: 1; min-width: 0; }
-.task-title { font-weight: 600; font-size: 15px; }
+.task-check:hover { border-color: var(--green); background: var(--green-soft); color: var(--green); }
+.task-check.done { background: var(--green); border-color: var(--green); color: #fff; }
+.task-body { flex: 1; min-width: 0; cursor: pointer; }
+.task-body:hover .task-title:not(.done) { color: var(--primary); }
+.task-title { font-weight: 600; font-size: 15px; transition: color .15s; }
 .task-title.done { text-decoration: line-through; color: var(--muted); }
 .task-meta { font-size: 12.5px; color: var(--text-2); margin-top: 2px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 
@@ -228,14 +239,17 @@ html[data-theme="dark"] .chip.trabajo { background: #4a2330; }
 .chip.prio-media { background: var(--amber-soft); color: var(--amber); }
 .chip.prio-baja { background: var(--green-soft); color: var(--green); }
 html[data-theme="dark"] .chip.prio-alta { background: #4a2230; }
+.chip.chip-notes { background: var(--primary-soft); color: var(--primary); font-size: 11px; }
 
 .task-actions { display: flex; gap: 4px; }
 .icon-btn {
   width: 36px; height: 36px; border-radius: 10px;
   display: grid; place-items: center; font-size: 17px;
-  color: var(--text-2); transition: background .15s;
+  color: var(--text-2); transition: background .15s, color .15s, transform .1s;
 }
-.icon-btn:hover { background: var(--primary-soft); color: var(--primary); }
+.icon-btn:hover { background: var(--primary-soft); color: var(--primary); transform: scale(1.05); }
+.icon-btn.btn-delete:hover { background: #ffe4e8; color: var(--danger); }
+html[data-theme="dark"] .icon-btn.btn-delete:hover { background: #40232a; color: var(--danger); }
 
 .empty {
   text-align: center; color: var(--muted); padding: 34px 16px;
@@ -267,6 +281,7 @@ html[data-theme="dark"] .chip.prio-alta { background: #4a2230; }
 .btn-danger { background: #ffe4e8; color: var(--danger); }
 html[data-theme="dark"] .btn-danger { background: #40232a; }
 .btn-block { width: 100%; }
+.btn-sm { padding: 6px 12px; font-size: 13px; border-radius: 9px; }
 
 /* ============ Inputs ============ */
 .input, select, textarea.input {

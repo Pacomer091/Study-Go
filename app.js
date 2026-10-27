@@ -21,7 +21,14 @@ let state = loadState();
 function loadState() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return Object.assign({}, DEFAULT_STATE, JSON.parse(raw));
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      const st = Object.assign({}, DEFAULT_STATE, parsed);
+      if (!Array.isArray(st.tasks) || st.tasks.length === 0) {
+        st.tasks = seedTasks();
+      }
+      return st;
+    }
   } catch (e) {
     console.warn("No se pudo leer el estado", e);
   }
@@ -168,8 +175,19 @@ function goto(view) {
   }
   $$(".nav-item").forEach((n) => n.classList.toggle("active", n.dataset.view === view));
   $$(".bottomnav-item").forEach((n) => n.classList.toggle("active", n.dataset.view === view));
+  updateFabVisibility(view);
   renderCurrent();
   window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function updateFabVisibility(view) {
+  const fab = $("#btn-add-task");
+  if (!fab) return;
+  if (view === "home" || view === "tasks" || view === "calendar") {
+    fab.style.display = "grid";
+  } else {
+    fab.style.display = "none";
+  }
 }
 
 function openMoreSheet() {
@@ -204,7 +222,10 @@ function renderCurrent() {
 /* ---------- Tareas (CRUD) ---------- */
 function tasksForToday() {
   const today = todayISO();
-  return state.tasks.filter((t) => t.date === today);
+  // Incluye las tareas con fecha de hoy y las pendientes atrasadas
+  return state.tasks
+    .filter((t) => t.date === today || (!t.done && t.date < today))
+    .sort((a, b) => (a.done - b.done) || a.date.localeCompare(b.date));
 }
 function upcomingExams() {
   const today = todayISO();
@@ -239,31 +260,42 @@ function renderHome() {
 
   // Lista de hoy
   const todayList = $("#home-today-list");
-  todayList.innerHTML = today.length ? today.map(taskCard).join("") : `<div class="empty">Nada para hoy 🎉</div>`;
+  todayList.innerHTML = today.length
+    ? today.map(taskCard).join("")
+    : `<div class="empty">
+        <p>Nada pendiente para hoy 🎉</p>
+        <button class="btn btn-ghost btn-sm" style="margin-top:10px;" data-action="new-task">＋ Añadir una tarea</button>
+      </div>`;
 
   // Exámenes
   const exams = upcomingExams();
   const examsList = $("#home-exams-list");
-  examsList.innerHTML = exams.length ? exams.map(taskCard).join("") : `<div class="empty">No hay exámenes próximos.</div>`;
+  examsList.innerHTML = exams.length
+    ? exams.map(taskCard).join("")
+    : `<div class="empty">
+        <p>No hay exámenes próximos.</p>
+        <button class="btn btn-ghost btn-sm" style="margin-top:10px;" data-action="new-exam">＋ Añadir examen</button>
+      </div>`;
 }
 
 function taskCard(t) {
   const overdue = !t.done && t.date < todayISO();
   return `
-    <div class="card" data-task-id="${t.id}">
-      <button class="task-check ${t.done ? "done" : ""}" data-action="toggle-task" data-id="${t.id}" aria-label="Completar tarea">${t.done ? "✓" : ""}</button>
-      <div class="task-body">
+    <div class="card task-item" data-task-id="${t.id}">
+      <button class="task-check ${t.done ? "done" : ""}" data-action="toggle-task" data-id="${t.id}" aria-label="${t.done ? "Marcar como pendiente" : "Completar tarea"}" title="${t.done ? "Completada (clic para desmarcar)" : "Clic para completar"}">${t.done ? "✓" : ""}</button>
+      <div class="task-body" data-action="edit-task" data-id="${t.id}" title="Haz clic para ver o editar la tarea">
         <div class="task-title ${t.done ? "done" : ""}">${esc(t.title)}</div>
         <div class="task-meta">
-          <span class="chip ${t.type}">${TYPE_LABEL[t.type]}</span>
-          <span class="chip prio-${t.priority}">${PRIO_LABEL[t.priority]}</span>
+          <span class="chip ${t.type}">${TYPE_LABEL[t.type] || t.type}</span>
+          <span class="chip prio-${t.priority}">${PRIO_LABEL[t.priority] || t.priority}</span>
           <span>📘 ${esc(t.subject)}</span>
-          <span style="${overdue ? "color: var(--danger); font-weight:700;" : ""}">${overdue ? "⚠️ " : "📆 "}${relativeDate(t.date)}</span>
+          <span style="${overdue ? "color: var(--danger); font-weight:700;" : ""}">${overdue ? "⚠️ Atrasada (" : "📆 "}${relativeDate(t.date)}${overdue ? ")" : ""}</span>
+          ${t.notes ? `<span class="chip chip-notes" title="${esc(t.notes)}">📝 Nota</span>` : ""}
         </div>
       </div>
       <div class="task-actions">
-        <button class="icon-btn" data-action="edit-task" data-id="${t.id}" aria-label="Editar">✏️</button>
-        <button class="icon-btn" data-action="delete-task" data-id="${t.id}" aria-label="Eliminar">🗑️</button>
+        <button class="icon-btn" data-action="edit-task" data-id="${t.id}" aria-label="Editar" title="Editar tarea">✏️</button>
+        <button class="icon-btn btn-delete" data-action="delete-task" data-id="${t.id}" aria-label="Eliminar" title="Eliminar tarea">🗑️</button>
       </div>
     </div>`;
 }
@@ -290,13 +322,18 @@ function renderTasks() {
 
   list.sort((a, b) => (a.done - b.done) || a.date.localeCompare(b.date));
   const el = $("#tasks-list");
-  el.innerHTML = list.length ? list.map(taskCard).join("") : `<div class="empty">No hay tareas en esta vista.</div>`;
+  el.innerHTML = list.length
+    ? list.map(taskCard).join("")
+    : `<div class="empty">
+        <p>No hay tareas en esta vista.</p>
+        <button class="btn btn-ghost btn-sm" style="margin-top:10px;" data-action="new-task">＋ Añadir tarea</button>
+      </div>`;
 }
 
 function openTaskModal(task) {
-  const isEdit = !!task;
-  const t = task || { title: "", subject: "", type: "tarea", date: todayISO(), priority: "media", notes: "" };
-  openModal(isEdit ? "Editar tarea" : "Nueva tarea", `
+  const isEdit = !!(task && task.id);
+  const t = Object.assign({ title: "", subject: "", type: "tarea", date: todayISO(), priority: "media", notes: "" }, task || {});
+  openModal(isEdit ? "Editar tarea" : (t.type === "examen" ? "Nuevo examen" : "Nueva tarea"), `
     <div class="field"><label>Título</label><input type="text" id="f-title" class="input" value="${esc(t.title)}" placeholder="Ej. Repasar tema 4" /></div>
     <div class="row-2">
       <div class="field"><label>Asignatura</label><input type="text" id="f-subject" class="input" value="${esc(t.subject)}" placeholder="Matemáticas" /></div>
@@ -309,7 +346,7 @@ function openTaskModal(task) {
       </div>
     </div>
     <div class="row-2">
-      <div class="field"><label>Fecha</label><input type="date" id="f-date" class="input" value="${t.date}" /></div>
+      <div class="field"><label>Fecha</label><input type="date" id="f-date" class="input" value="${t.date || todayISO()}" /></div>
       <div class="field"><label>Prioridad</label>
         <select id="f-priority" class="input">
           <option value="alta" ${t.priority === "alta" ? "selected" : ""}>Alta</option>
@@ -801,6 +838,13 @@ document.addEventListener("click", (e) => {
     goto(view);
     return;
   }
+  if (action === "goto-filter") {
+    if (el.dataset.closeModal) closeModal();
+    const filter = el.dataset.filter;
+    if (filter) taskFilter = filter;
+    goto(view || "tasks");
+    return;
+  }
   if (action === "modal-close") { closeModal(); return; }
   if (action === "confirm-cancel") { window.__confirmCb = null; closeModal(); return; }
   if (action === "confirm-ok") { const cb = window.__confirmCb; window.__confirmCb = null; closeModal(); if (cb) cb(); return; }
@@ -811,6 +855,8 @@ document.addEventListener("click", (e) => {
   else if (action === "delete-task") deleteTask(id);
   else if (action === "filter-task") { taskFilter = el.dataset.key; renderTasks(); }
   else if (action === "save-task") saveTask(id);
+  else if (action === "new-task") openTaskModal(null);
+  else if (action === "new-exam") openTaskModal({ type: "examen" });
 
   // Calendario
   else if (action === "cal-select") { calSelected = el.dataset.date; renderCalendar(); }
